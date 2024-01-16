@@ -10,6 +10,9 @@ var pb = new PictureBox { Dock = DockStyle.Fill, };
 
 var timer = new System.Windows.Forms.Timer { Interval = 20, };
 
+int speedX = 0;
+int speedY = 0;
+
 Bitmap bmp = null;
 Graphics g = null;
 
@@ -92,15 +95,17 @@ public class PlayerAnimation : Form
     Bitmap bmp = null;
     Graphics g = null;
     Image player;
-    List<string> pMove = new List<string>();
+    List<Bitmap> pMove = new List<Bitmap>();
     public int steps = 0;
     public int slowFrameRate = 0;
     public bool goLeft, goRight, goUp, goDown;
-    public int X;
-    public int Y;
+    public float X;
+    public float Y;
     public int height = 50;
     public int width = 50;
-    public int speed = 10;
+    public int speed = 12;
+    // public int speedX = 0;
+    // public int speedY = 0;
 
 
     public PlayerAnimation()
@@ -112,10 +117,13 @@ public class PlayerAnimation : Form
     {
         if (e.KeyCode == Keys.Left)
             goLeft = true;
+        
         if (e.KeyCode == Keys.Right)
             goRight = true;
+        
         if (e.KeyCode == Keys.Up)
             goUp = true;
+            
         if (e.KeyCode == Keys.Down)
             goDown = true;
     }
@@ -124,10 +132,13 @@ public class PlayerAnimation : Form
     {
         if (e.KeyCode == Keys.Left)
             goLeft = false;
+        
         if (e.KeyCode == Keys.Right)
             goRight = false;
+
         if (e.KeyCode == Keys.Up)
             goUp = false;
+        
         if (e.KeyCode == Keys.Down)
             goDown = false;
     }
@@ -141,49 +152,48 @@ public class PlayerAnimation : Form
 
     public void TimerEvent(object sender, EventArgs e)
     {
-        if (goLeft && X > 0)
-        {
-            X -= speed;
+        if (goLeft)
             AnimatePLayer(5, 8);
-        }
-        if (goRight && X + width < this.ClientSize.Width)
-        {
-            X += speed;
+        else if (goRight)
             AnimatePLayer(9, 12);
-        }
-        if (goUp && Y > 0)
-        {
-            Y -= speed;
+        else if (goUp)
             AnimatePLayer(13, 16);
-        }
-        if (goDown && Y + height < this.ClientSize.Height)
-        {
-            Y += speed;
+        else if (goDown)
             AnimatePLayer(1, 4);
-        }
 
+        float dx = 0f, dy = 0f;
+        if (goLeft)
+            dx -= 1f;
+        if (goRight)
+            dx += 1f;
+        if (goUp)
+            dy -= 1f;
+        if (goDown)
+            dy += 1f;
+        
+        var mod = MathF.Sqrt(dx * dx + dy * dy);
+        if (mod == 0)
+            return;
+        var newX = X + speed * dx / mod;
+        var newY = Y + speed * dy / mod;
+        
+           
     }
 
     public void SetUp()
     {
-        // this.BackgroundImage = Image.FromFile("../../SPRITE/images.jpg");
-        // this.BackgroundImageLayout = ImageLayout.Stretch;
-        // this.DoubleBuffered = true;
-
-        pMove = Directory.GetFiles("./SPRITES/SPRITE/", "*.png").ToList();
-        player = Image.FromFile(pMove[0]);
-        foreach (var item in pMove)
-        {
-            MessageBox.Show(item.ToString());
-
-        }
+        pMove = Directory.GetFiles("./SPRITES/SPRITE/", "*.png")
+            .Select(file => Bitmap.FromFile(file) as Bitmap)
+            .ToList();
+        player = pMove[0];
+        
     }
 
     public void AnimatePLayer(int start, int end)
     {
         slowFrameRate += 1;
 
-        if (slowFrameRate == 4)
+        if (slowFrameRate > 4)
         {
             steps++;
             slowFrameRate = 0;
@@ -194,7 +204,7 @@ public class PlayerAnimation : Form
             steps = start;
         }
 
-        player = Image.FromFile(pMove[steps]);
+        player = pMove[steps];
     }
     public void Draw(Graphics g)
     {
